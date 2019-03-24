@@ -12,13 +12,7 @@ async def get_cmd_output(cmd, do_strip=True):
         return output.strip()
     else:
         return output
-
-async def force_self_restart():
-    proc = await asyncio.create_subprocess_shell("systemctl restart tcnati", stdout=asyncio.subprocess.PIPE)
-    
-    # shouldn't get here
-    raise OSError("Self-restart failed?")
-
+        
 async def get_version():
     global version
     if version is None:
