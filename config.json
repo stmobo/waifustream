@@ -1,0 +1,19 @@
+{
+    "tokenfile": "/mnt/disks/data/waifustream-data/token.txt",
+    "maintenance_mode": false,
+    "authorized_users": [
+        135165531908079616
+    ],
+    "log_channels": [543450018095562763],
+    "error_channels": [493856964175200286],
+    "command_channels": [
+      483023170958262284,
+      528255900134408203
+  ],
+  "exclude_tags": [
+      "loli",
+      "beastiality",
+      "guro",
+      "shadman"
+  ]
+}
