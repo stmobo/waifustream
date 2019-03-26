@@ -3,7 +3,6 @@ import sys
 import aiohttp
 import attr
 from PIL import Image
-import imagehash
 import aioredis
 import numpy as np
 
@@ -11,7 +10,7 @@ from . import danbooru
 
 exclude_tags = [
     "loli",
-    "beastiality",
+    "bestiality",
     "guro",
     "shadman"
 ]
@@ -20,28 +19,33 @@ def construct_hash_idx_key(idx, val):
     return 'hash_idx:{:02d}:{:02x}'.format(idx, val).encode('utf-8')
 
 async def index_post(redis, http_sess, post):
-    async with post.fetch(http_sess) as img:
-        h = danbooru.imhash(img)
-        h_bytes = h.tobytes()
+    if post.url is None:
+        raise ValueError("Post has no file URL!")
         
-    ex = await redis.exists(b'phash:'+h_bytes+b':characters')
-    if ex:
-        return
+    img = await post.fetch(http_sess)
+    h = danbooru.combined_hash(img)
+    h_bytes = h.tobytes()
+    img.close()
+        
+    ex = await redis.get(b'hash:'+h_bytes+b':id')
+    if ex is not None:
+        return False, ex
         
     tr = redis.multi_exec()
-    tr.set(b'phash:'+h_bytes+b':id', post.id)
-    tr.set(b'phash':+h_bytes+b':src', 'danbooru')
+    tr.set(b'hash:'+h_bytes+b':id', post.id)
+    tr.set(b'hash:'+h_bytes+b':src', 'danbooru')
     
     for idx, val in enumerate(h_bytes):
         tr.sadd(construct_hash_idx_key(idx, val), h_bytes)
         
     if len(post.characters) > 0:
-        tr.sadd(b'phash:'+h_bytes+b':characters', *post.characters)
+        tr.sadd(b'hash:'+h_bytes+b':characters', *post.characters)
         for character in post.characters:
             b_char = character.encode('utf-8')
-            tr.sadd('character:'+b_char, h_bytes)
+            tr.sadd(b'character:'+b_char, h_bytes)
         
     res = await tr.execute()
+    return True, post.id
     
 async def search_index(redis, imhash):
     h_bytes = imhash.tobytes()
@@ -54,15 +58,16 @@ async def search_index(redis, imhash):
     _t = []
     
     for h in hashes:
-        dist = danbooru.hamming_dist(h, imhash)
+        arr = np.frombuffer(h, dtype=np.uint8)
+        dist = danbooru.hamming_dist(arr, imhash)
         _t.append((h, dist))
         
     return sorted(_t, key=lambda o: o[1])
 
-async def get_by_imhash(redis, imhash):
-    h_bytes = imhash.tobytes()
-    post_id = await redis.get(b'phash:'+h_bytes+b':id')
+async def get_by_imhash(redis, h_bytes):
+    post_id = await redis.get(b'hash:'+h_bytes+b':id')
     
     if post_id is not None:
-        async with aiohttp.Session() as sess:
+        post_id = post_id.decode('utf-8')
+        async with aiohttp.ClientSession() as sess:
             return await danbooru.DanbooruPost.get_post(sess, post_id)

@@ -1,10 +1,12 @@
 import asyncio
 from pathlib import Path
-from io import BytesIO
+import io
 
 import aiohttp
 import attr
 from PIL import Image
+import imagehash
+import numpy as np
 
 base_url = 'https://danbooru.donmai.us'
 
@@ -14,7 +16,7 @@ class DanbooruPost(object):
     rating: str = attr.ib()
     tags: tuple = attr.ib(converter=tuple)
     url: str = attr.ib()
-    characters: tuple = attr.ib(converter=tuple))
+    characters: tuple = attr.ib(converter=tuple)
     
     imhash = attr.ib(default=None)
     indexed = attr.ib(default=False)
@@ -51,7 +53,7 @@ class DanbooruPost(object):
         bio = io.BytesIO()
         async with sess.get(self.url) as resp:
             while True:
-                chunk = resp.content.read(8*1024)
+                chunk = await resp.content.read(8*1024)
                 if not chunk:
                     break
                 bio.write(chunk)
@@ -60,27 +62,30 @@ class DanbooruPost(object):
         return bio
     
     async def fetch(self, sess):
-        with io.BytesIO() as bio:
-            async with sess.get(self.url) as resp:
-                while True:
-                    chunk = resp.content.read(8*1024)
-                    if not chunk:
-                        break
-                    bio.write(chunk)
-                    
-            bio.seek(0)
-            return Image.open(bio)
+        bio = await self.fetch_bytesio(sess)
+        img = Image.open(bio)
+        img.load()
+        
+        return img
             
     @classmethod
     def from_api_json(cls, data):
         tags = data['tag_string'].split()
         characters = data['tag_string_character'].split()
         
+        url = None
+        if 'file_url' in data:
+            url = data['file_url']
+        elif 'large_file_url' in data:
+            url = data['large_file_url']
+        elif 'preview_file_url' in data:
+            url = data['preview_file_url']
+        
         return cls(
             id=data['id'],
             rating=data['rating'],
             tags=tags,
-            url=data.get('large_file_url', data['file_url']),
+            url=url,
             characters=characters
         )
     
@@ -103,9 +108,10 @@ async def search_api(session, tags):
     if len(tags) > 2:
         raise ValueError("Cannot search for more than two tags at a time")
     
+    seen_ids = set()
     page = 0
     while True:
-        endpoint = '/posts.json?page={}&limit=200'.format(tags, page)
+        endpoint = '/posts.json?page={}&limit=200'.format(page)
         
         if len(tags) > 0:
             endpoint += '&tags={}'.format('%20'.join(map(lambda s: str(s).lower().strip(), tags)))
@@ -115,13 +121,17 @@ async def search_api(session, tags):
                 return
             
             data = await response.json()
+            
             if len(data) == 0:
                 return
                 
             for d in data:
-                yield DanbooruPost.from_api_json(d)
+                if d['id'] not in seen_ids:
+                    seen_ids.add(d['id'])
+                    yield DanbooruPost.from_api_json(d)
                 
         page += 1
+        
         
 async def search(session, with_tags, without_tags, rating=None):
     async for post in search_api(session, with_tags[:2]):
@@ -136,11 +146,26 @@ async def search(session, with_tags, without_tags, rating=None):
         
         yield post
         
-def imhash(img):
+def diff_hash(img):
     h = imagehash.dhash(img)
     arr = np.packbits(np.where(h.hash.flatten(), 1, 0))
     
     return arr
+
+def avg_hash(img):
+    h = imagehash.average_hash(img)
+    arr = np.packbits(np.where(h.hash.flatten(), 1, 0))
+    
+    return arr
+
+def combined_hash(img):
+    h1 = imagehash.dhash(img)
+    h1 = np.packbits(np.where(h1.hash.flatten(), 1, 0))
+    
+    h2 = imagehash.average_hash(img)
+    h2 = np.packbits(np.where(h2.hash.flatten(), 1, 0))
+    
+    return np.concatenate((h1, h2))
 
 def hamming_dist(h1, h2):
     return np.count_nonzero(np.unpackbits(np.bitwise_xor(h1, h2)))
