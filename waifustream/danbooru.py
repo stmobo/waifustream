@@ -15,7 +15,9 @@ class DanbooruPost(object):
     tags: tuple = attr.ib(converter=tuple)
     url: str = attr.ib()
     characters: tuple = attr.ib(converter=tuple))
+    
     imhash = attr.ib(default=None)
+    indexed = attr.ib(default=False)
     
     def __len__(self):
         return len(self.tags)
@@ -81,6 +83,12 @@ class DanbooruPost(object):
             url=data.get('large_file_url', data['file_url']),
             characters=characters
         )
+    
+    @classmethod
+    async def get_post(cls, session, post_id):
+        async with session.get(base_url+'/posts/{}.json'.format(post_id)) as resp:
+            data = await resp.json()
+            return cls.from_api_json(data)
 
 async def api_random(session, tags):
     if len(tags) > 2:
@@ -133,3 +141,6 @@ def imhash(img):
     arr = np.packbits(np.where(h.hash.flatten(), 1, 0))
     
     return arr
+
+def hamming_dist(h1, h2):
+    return np.count_nonzero(np.unpackbits(np.bitwise_xor(h1, h2)))

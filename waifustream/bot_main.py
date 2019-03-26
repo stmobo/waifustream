@@ -6,6 +6,7 @@ import ujson as json
 import logging
 import traceback
 from pathlib import Path
+import subprocess as sp
 
 from . import utils
 
@@ -67,6 +68,9 @@ class WaifuStreamClient(discord.Client):
             return member.display_name
         else:
             return user.display_name
+            
+    async def dispatch_cmd(self, cmd, args):
+        
     
     async def on_ready(self):
         print('Logged in as')
@@ -88,6 +92,8 @@ class WaifuStreamClient(discord.Client):
             await self.change_presence(activity=discord.Game("Maintenance Mode"))
         else:
             await self.change_presence(activity=discord.Game("Version {}".format(v)))
+
+        self.indexer = sp.Popen([sys.executable, '/waifustream/indexer.py'])
 
         self.ready = True
 
