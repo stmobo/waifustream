@@ -141,10 +141,10 @@ async def search_index(redis, imhash, min_threshold=64):
     return sorted(_t, key=lambda o: o[1])
     
 async def get_indexed_characters(redis):
-    return await redis.lrange('indexed_characters', 0, -1, encoding='utf-8')
+    return await redis.lrange('indexed_tags', 0, -1, encoding='utf-8')
     
 async def add_indexed_character(redis, character):
-    return await redis.lpush('indexed_characters', character)
+    return await redis.lpush('indexed_tags', character)
     
 async def get_character_queue_length(redis, character):
     return await redis.llen('index_queue:'+character)

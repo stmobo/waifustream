@@ -20,7 +20,7 @@ async def refresh_character_worker():
     print("[refresh] Character refresh worker started.")
     
     while True:
-        character = await redis.brpoplpush('indexed_characters', 'indexed_characters')
+        character = await redis.brpoplpush('indexed_tags', 'indexed_tags')
         character = character.decode('utf-8')
         print("[refresh] Refreshing character: "+character)
         
@@ -55,7 +55,7 @@ async def fetch_worker():
         last_fetch_time = time.perf_counter()
         
         while True:
-            characters = await redis.lrange('indexed_characters', 0, -1)
+            characters = await redis.lrange('indexed_tags', 0, -1)
             for character in characters:
                 character = character.decode('utf-8')
                 next_entry = await redis.rpop('index_queue:'+character)
