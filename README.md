@@ -61,6 +61,8 @@ The following keys can be set within `config.json` to control both the Bot and t
 ```
 redis_url           : The URL of the Redis server to connect to.
 min_download_delay  : Minimum delay between each fetched image, in seconds. 
+bot_ua              : The User-Agent string to use for HTTP requests made by the Discord bot.
+indexer_ua          : The User-Agent string to use for HTTP requests made by the Indexer.
 exclude_tags        : A list of tags that will be excluded from indexing and from bot search results.
 tokenfile           : Path to a file containing the bot's login token.
 maintenance_mode    : If True, the bot will start in Maintenance Mode, and regular users won't be able to access any bot commands.

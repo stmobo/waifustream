@@ -11,14 +11,12 @@ import aioredis
 from waifustream import danbooru, index
 from waifustream.index import IndexEntry
 
-MIN_DOWNLOAD_DELAY = 1.0
-REDIS_URL = 'redis://localhost'
-
 with open(sys.argv[1], 'r', encoding='utf-8') as f:
     config = json.load(f)
     
     MIN_DOWNLOAD_DELAY = config['min_download_delay']
     REDIS_URL = config['redis_url']
+    INDEXER_UA = config['indexer_ua']
     index.exclude_tags = config['exclude_tags']
 
 async def refresh_one_tag(tag, sess, redis):
@@ -61,7 +59,7 @@ async def refresh_character_worker():
     while True:
         tags = await redis.lrange('indexed_tags', 0, -1)
         
-        async with aiohttp.ClientSession() as sess:
+        async with aiohttp.ClientSession(headers={'User-Agent': INDEXER_UA}) as sess:
             futs = []
             for tag in tags:
                 tag = tag.decode('utf-8')
@@ -76,7 +74,7 @@ async def fetch_worker():
     redis = await aioredis.create_redis(REDIS_URL)
     print("[fetch] Fetch worker started.")
     
-    async with aiohttp.ClientSession() as sess:
+    async with aiohttp.ClientSession(headers={'User-Agent': INDEXER_UA}) as sess:
         while True:
             tags = await redis.lrange('indexed_tags', 0, -1)
             for tag in tags:

@@ -23,7 +23,7 @@ async def cmd_remove_indexed_tag(client, msg, args):
         
     tags = list(filter(lambda t: t not in index.exclude_tags, (t.lower().strip() for t in args)))
     
-    async with aiohttp.ClientSession() as sess:
+    async with aiohttp.ClientSession(headers={'User-Agent': client.get_config('bot_ua')}) as sess:
         url = danbooru.base_url+'/tags.json?search[name]='+(','.join(tags))
         
         async with sess.get(url) as resp:
@@ -50,7 +50,7 @@ async def cmd_add_indexed_tag(client, msg, args):
         
     tags = list(filter(lambda t: t not in index.exclude_tags, (t.lower().strip() for t in args)))
     
-    async with aiohttp.ClientSession() as sess:
+    async with aiohttp.ClientSession(headers={'User-Agent': client.get_config('bot_ua')}) as sess:
         url = danbooru.base_url+'/tags.json?search[name]='+(','.join(tags))
         
         async with sess.get(url) as resp:
@@ -138,7 +138,7 @@ async def cmd_identify(client, msg, args):
             res_imhash, dist = res[0]
             entry = await IndexEntry.load_from_index(client.redis, res_imhash)
             
-            async with aiohttp.ClientSession() as sess:
+            async with aiohttp.ClientSession(headers={'User-Agent': client.get_config('bot_ua')}) as sess:
                 db_post = await danbooru.DanbooruPost.get_post(sess, entry.src_id)
             
             lines = [

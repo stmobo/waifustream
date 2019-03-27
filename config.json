@@ -2,6 +2,8 @@
     "tokenfile": "/mnt/disks/data/waifustream-data/token.txt",
     "redis_url": "redis://localhost",
     "min_download_delay": 1.0,
+    "bot_ua": "WaifuStream-Discord (https://github.com/stmobo/waifustream)",
+    "indexer_ua": "WaifuStream-Indexer (https://github.com/stmobo/waifustream)",
     "maintenance_mode": false,
     "authorized_users": [
         135165531908079616
