@@ -40,13 +40,16 @@ async def refresh_character_worker():
                     entry = IndexEntry.from_danbooru_post(None, post)
                     ser = json.dumps(attr.asdict(entry))
                     
-                    await redis.lpush('index_queue:'+tag, ser)
-                    await redis.sadd('awaiting_index:danbooru', str(post.id))
+                    await asyncio.gather(
+                        redis.lpush('index_queue:'+tag, ser),
+                        redis.sadd('awaiting_index:danbooru', str(post.id))
+                    )
+                    
                     n += 1
                     
                 print("[refresh] Enqueued {} items for {}".format(n, tag))
     
-        await asyncio.sleep(600)
+        await asyncio.sleep(30*60)
 
 
 async def fetch_worker():
