@@ -89,8 +89,7 @@ async def fetch_worker():
                 dt = cur_time - last_fetch_time
                 last_fetch_time = cur_time
                 
-                if dt < MIN_DOWNLOAD_DELAY:
-                    await asyncio.sleep(MIN_DOWNLOAD_DELAY - dt)
+                await asyncio.sleep(MIN_DOWNLOAD_DELAY)
 
 def _start_worker(f):
     loop = asyncio.get_event_loop()
