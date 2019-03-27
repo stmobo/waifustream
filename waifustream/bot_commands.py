@@ -132,24 +132,30 @@ async def cmd_identify(client, msg, args):
             imhash = index.combined_hash(img)    
             bio.close()
             
-            res = await index.search_index(client.redis, imhash)
+            res = await index.search_index(client.redis, imhash, min_threshold=32)
             t2 = time.perf_counter()
             
-            res_imhash, dist = res[0]
-            entry = await IndexEntry.load_from_index(client.redis, res_imhash)
-            
-            async with aiohttp.ClientSession(headers={'User-Agent': client.get_config('bot_ua')}) as sess:
-                db_post = await danbooru.DanbooruPost.get_post(sess, entry.src_id)
-            
-            lines = [
-                "Lookup completed in {:.3f} seconds:".format(t2-t1),
-                "    **Confidence:**: {:.1%} (distance {})".format((64 - dist) / 64, dist),
-                "    **Source:** {}#{}".format(entry.src.title(), entry.src_id),
-                "    **Rating:**: {}".format(index.friendly_ratings.get(entry.rating, 'Unknown')),
-                "    **Franchises:**: {}".format(', '.join('`{}`'.format(c) for c in db_post.copyrights)),
-                "    **Characters:**: {}".format(', '.join('`{}`'.format(c) for c in entry.characters)),
-                "    **Artists:**: {}".format(', '.join('`{}`'.format(c) for c in db_post.artists)),
-            ]
+            if len(res) > 0:
+                res_imhash, dist = res[0]
+                entry = await IndexEntry.load_from_index(client.redis, res_imhash)
+                
+                async with aiohttp.ClientSession(headers={'User-Agent': client.get_config('bot_ua')}) as sess:
+                    db_post = await danbooru.DanbooruPost.get_post(sess, entry.src_id)
+                
+                lines = [
+                    "Lookup completed in {:.3f} seconds:".format(t2-t1),
+                    "    **Similarity:**: {:.1%} (distance {})".format((128 - dist) / 128, dist),
+                    "    **Source:** {}#{}".format(entry.src.title(), entry.src_id),
+                    "    **Rating:**: {}".format(index.friendly_ratings.get(entry.rating, 'Unknown')),
+                    "    **Franchises:**: {}".format(', '.join('`{}`'.format(c) for c in db_post.copyrights)),
+                    "    **Characters:**: {}".format(', '.join('`{}`'.format(c) for c in entry.characters)),
+                    "    **Artists:**: {}".format(', '.join('`{}`'.format(c) for c in db_post.artists)),
+                ]
+            else:
+                lines = [
+                    "Lookup completed in {:.3f} seconds:".format(t2-t1),
+                    "    No images were found within the required similarity threshold."
+                ]
             
             return await client.reply(msg, '\n'.join(lines))
     except OSError:
