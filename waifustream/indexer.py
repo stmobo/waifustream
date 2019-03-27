@@ -17,7 +17,7 @@ REDIS_URL = 'redis://localhost'
 async def refresh_one_tag(tag, sess, redis):
     print("[refresh] Refreshing tag: "+tag)
     
-    cur_head = redis.lindex('index_queue:'+tag, 0)
+    cur_head = await redis.lindex('index_queue:'+tag, 0)
     if cur_head is not None:
         print(cur_head)
         head_entry = json.loads(cur_head)
