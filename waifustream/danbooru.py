@@ -122,6 +122,7 @@ async def search_api(session, tags, redis, start_id=None):
             data = await response.json()
             
             if not isinstance(data, list):
+                print("    Got weird response: "+str(data))
                 continue
                 
             if len(data) == 0:
