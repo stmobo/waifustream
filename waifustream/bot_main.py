@@ -189,7 +189,6 @@ class WaifuStreamClient(discord.Client):
 async def run_bot():
     client = WaifuStreamClient(activity=discord.Game("Starting..."))
     client.load_config()
-    cards.load_cards_config()
 
     tokenfile = client.get_config('tokenfile')
 
