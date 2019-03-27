@@ -21,7 +21,7 @@ async def cmd_remove_indexed_tag(client, msg, args):
     if len(args) == 0:
         return await client.reply(msg, "Usage: `w!index [tags...]`")
         
-    tags = list(filter(lambda t: t not in index.exclude_tags, t.lower().strip() for t in args))
+    tags = list(filter(lambda t: t not in index.exclude_tags, (t.lower().strip() for t in args)))
     
     async with aiohttp.ClientSession() as sess:
         url = danbooru.base_url+'/tags.json?search[name]='+(','.join(tags))
@@ -48,7 +48,7 @@ async def cmd_add_indexed_tag(client, msg, args):
     if len(args) == 0:
         return await client.reply(msg, "Usage: `w!index [tags...]`")
         
-    tags = list(filter(lambda t: t not in index.exclude_tags, t.lower().strip() for t in args))
+    tags = list(filter(lambda t: t not in index.exclude_tags, (t.lower().strip() for t in args)))
     
     async with aiohttp.ClientSession() as sess:
         url = danbooru.base_url+'/tags.json?search[name]='+(','.join(tags))
