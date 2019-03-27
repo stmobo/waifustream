@@ -100,7 +100,7 @@ async def api_random(session, tags):
         data = await response.json()
         return list(DanbooruPost.from_api_json(d) for d in data)
 
-async def search_api(session, tags, redis, start_id=None):
+async def search_api(session, tags, start_id=None):
     if len(tags) > 2:
         raise ValueError("Cannot search for more than two tags at a time")
     
