@@ -44,15 +44,15 @@ async def cmd_identify(client, msg, args):
             return await client.reply(msg, "I couldn't find any image to identify. (Maybe it's too far back?)")
 
     try:
+        t1 = time.perf_counter()
+        
         bio = io.BytesIO()
         await identify_attachment.save(bio)
         
         with Image.open(bio) as img:
-            imhash = index.combined_hash(img)
-            
+            imhash = index.combined_hash(img)    
             bio.close()
             
-            t1 = time.perf_counter()
             res = await index.search_index(client.redis, imhash)
             t2 = time.perf_counter()
             
