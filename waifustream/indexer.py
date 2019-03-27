@@ -14,6 +14,13 @@ from waifustream.index import IndexEntry
 MIN_DOWNLOAD_DELAY = 1.0
 REDIS_URL = 'redis://localhost'
 
+with open(sys.argv[1], 'r', encoding='utf-8') as f:
+    config = json.load(f)
+    
+    MIN_DOWNLOAD_DELAY = config['min_download_delay']
+    REDIS_URL = config['redis_url']
+    index.exclude_tags = config['exclude_tags']
+
 async def refresh_one_tag(tag, sess, redis):
     print("[refresh] Refreshing tag: "+tag)
     

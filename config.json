@@ -1,5 +1,7 @@
 {
     "tokenfile": "/mnt/disks/data/waifustream-data/token.txt",
+    "redis_url": "redis://localhost",
+    "min_download_delay": 1.0,
     "maintenance_mode": false,
     "authorized_users": [
         135165531908079616
@@ -7,14 +9,14 @@
     "log_channels": [560327127363354645],
     "error_channels": [493856964175200286],
     "command_channels": [
-      483023170958262284,
-      528255900134408203
-  ],
-  "exclude_tags": [
-      "loli",
-      "shota",
-      "beastiality",
-      "guro",
-      "shadman"
-  ]
+        483023170958262284,
+        528255900134408203
+    ],
+    "exclude_tags": [
+        "loli",
+        "shota",
+        "beastiality",
+        "guro",
+        "shadman"
+    ]
 }
