@@ -9,6 +9,7 @@ import time
 import traceback
 
 import discord
+from PIL import Image
 import ujson as json
 
 from . import utils, index, danbooru
