@@ -19,6 +19,7 @@ async def refresh_one_tag(tag, sess, redis):
     
     cur_head = redis.lindex('index_queue:'+tag, 0)
     if cur_head is not None:
+        print(cur_head)
         head_entry = json.loads(cur_head)
         last_id = head_entry['src_id']
         print("[refresh] starting from ID {} with tag {}".format(last_id, tag))
