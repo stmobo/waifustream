@@ -32,14 +32,15 @@ async def main():
         print("Could not identify any candidate images.")
         return
         
-    res_imhash, dist = res[0]
-    dh2 = res_imhash[:8]
-    ah2 = res_imhash[8:]
+    res_imhash, dist = res[0]    
+    entry = await IndexEntry.load_from_index(redis, res_imhash)
+    
+    dh2 = entry.imhash_array[:8]
+    ah2 = entry.imhash_array[8:]
     
     dist1 = index.hamming_dist(dh1, dh2)
     dist2 = index.hamming_dist(ah1, ah2)
     
-    entry = await IndexEntry.load_from_index(redis, res_imhash)
     print("Closest match: {} - Distance {} ({}+{})".format(res_imhash.hex(), dist, dist1, dist2))
     print("Source: {}#{}".format(entry.src, entry.src_url))
     print("Rating: "+str(entry.rating))
