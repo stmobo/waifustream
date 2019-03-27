@@ -11,7 +11,7 @@ import aioredis
 from waifustream import danbooru, index
 from waifustream.index import IndexEntry
 
-MIN_DOWNLOAD_DELAY = 1.25
+MIN_DOWNLOAD_DELAY = 1.0
 REDIS_URL = 'redis://localhost'
 
 
