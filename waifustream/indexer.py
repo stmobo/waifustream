@@ -14,7 +14,7 @@ from waifustream.index import IndexEntry
 MIN_DOWNLOAD_DELAY = 1.0
 REDIS_URL = 'redis://localhost'
 
-async def refresh_one_tag(tag, redis):
+async def refresh_one_tag(tag, sess, redis):
     print("[refresh] Refreshing tag: "+tag)
     
     n = 0
@@ -50,7 +50,7 @@ async def refresh_character_worker():
             futs = []
             for tag in tags:
                 tag = tag.decode('utf-8')
-                futs.append(asyncio.ensure_future(refresh_one_tag(tag, redis)))
+                futs.append(asyncio.ensure_future(refresh_one_tag(tag, sess, redis)))
                 
             await asyncio.gather(*futs)
     
