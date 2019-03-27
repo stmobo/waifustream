@@ -44,7 +44,7 @@ async def refresh_character_worker():
                     await redis.sadd('awaiting_index:danbooru', str(post.id))
                     n += 1
                     
-            print("[refresh] Enqueued {} items for {}".format(n, tag))
+                    print("[refresh] Enqueued {} items for {}".format(n, tag))
     
         await asyncio.sleep(90)
 
