@@ -16,6 +16,8 @@ class DanbooruPost(object):
     tags: tuple = attr.ib(converter=tuple)
     url: str = attr.ib()
     characters: tuple = attr.ib(converter=tuple)
+    copyrights: tuple = attr.ib(converter=tuple)
+    artists: tuple = attr.ib(converter=tuple)
     
     def __len__(self):
         return len(self.tags)
@@ -82,7 +84,9 @@ class DanbooruPost(object):
             rating=data['rating'],
             tags=tags,
             url=url,
-            characters=characters
+            characters=characters,
+            copyrights=data['tag_string_copyright'].split(),
+            artists=data['tag_string_artist'].split()
         )
     
     @classmethod
