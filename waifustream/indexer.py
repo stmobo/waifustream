@@ -1,5 +1,5 @@
 import asyncio
-import json
+import ujson as json
 import multiprocessing as mp
 import sys
 import time
