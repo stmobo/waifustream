@@ -11,10 +11,17 @@ import numpy as np
 
 exclude_tags = [
     "loli",
+    "shota",
     "bestiality",
     "guro",
     "shadman"
 ]
+
+friendly_ratings = {
+    's': 'Safe',
+    'q': 'Questionable',
+    'e': 'Explicit'
+}
 
 def construct_hash_idx_key(idx, val):
     return 'hash_idx:{:02d}:{:02x}'.format(idx, val).encode('utf-8')

@@ -1,14 +1,17 @@
 import asyncio
-import discord
 import re
 import sys
-import ujson as json
 import logging
 import traceback
 from pathlib import Path
 import subprocess as sp
 
+import aioredis
+import discord
+import ujson as json
+
 from . import utils
+from . import bot_commands
 
 class WaifuStreamClient(discord.Client):
     perms_integer = 379968
@@ -43,15 +46,12 @@ class WaifuStreamClient(discord.Client):
         for channel in self.iter_channels(self.get_config('error_channels')):
             await channel.send('`[{}]` {}'.format(timestamp, msg), **kwargs)
 
-    async def reply(self, original_msg, reply_text, timed=True, **kwargs):
+    async def reply(self, original_msg, reply_text, **kwargs):
         ch = original_msg.channel
         msg = await ch.send(
             "<@!{}> | {:s}".format(original_msg.author.id, reply_text),
             **kwargs
         )
-
-        if timed:
-            self.set_message_ttl(msg)
 
         return msg
 
@@ -69,8 +69,9 @@ class WaifuStreamClient(discord.Client):
         else:
             return user.display_name
             
-    async def dispatch_cmd(self, cmd, args):
-        
+    async def dispatch_cmd(self, msg, cmd, args):
+        if cmd == 'identify':
+            return await bot_commands.cmd_identify(self, msg, args)
     
     async def on_ready(self):
         print('Logged in as')
@@ -88,12 +89,12 @@ class WaifuStreamClient(discord.Client):
         v = await utils.get_version()
         await self.log_notify("WaifuStream Version {} starting up!".format(v))
 
+        self.redis = await aioredis.create_redis('redis://localhost')
+
         if self.get_config('maintenance_mode'):
             await self.change_presence(activity=discord.Game("Maintenance Mode"))
         else:
             await self.change_presence(activity=discord.Game("Version {}".format(v)))
-
-        self.indexer = sp.Popen([sys.executable, '/waifustream/indexer.py'])
 
         self.ready = True
 
