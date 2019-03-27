@@ -114,7 +114,7 @@ async def api_binsearch(session, tags, find_id):
     
     find_id = int(find_id)
     
-    print("[binsearch] tags: {} - finding upper bound for id".format(' '.join(tags), find_id))
+    print("[binsearch] tags: {} - finding upper bound for id {}".format(' '.join(tags), find_id))
     
     while True:
         await asyncio.sleep(0.5)
