@@ -26,7 +26,7 @@ async def refresh_one_tag(tag, sess, redis):
         last_id = None
     
     n = 0
-    async for post in danbooru.search(sess, [tag], index.exclude_tags, start_from=last_id):
+    async for post in danbooru.search(sess, [tag], index.exclude_tags, start_id=last_id):
         is_indexed, awaiting_index = await asyncio.gather(
             redis.sismember('indexed:danbooru', str(post.id)),
             redis.sismember('awaiting_index:danbooru', str(post.id))
