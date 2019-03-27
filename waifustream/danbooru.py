@@ -113,8 +113,6 @@ def construct_search_endpoint(page, tags, start_id):
     if len(tags) > 0:
         endpoint += '&tags={}'.format('+'.join(map(lambda s: str(s).lower().strip(), tags)))
 
-    print(endpoint)
-
     return base_url+endpoint
 
 async def search_api(session, tags, start_id=None):
