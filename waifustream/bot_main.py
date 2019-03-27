@@ -105,7 +105,23 @@ class WaifuStreamClient(discord.Client):
         else:
             await self.change_presence(activity=discord.Game("Version {}".format(v)))
 
+        asyncio.ensure_future(self.update_presence_loop())
+
         self.ready = True
+
+    async def update_presence_loop(self):
+        while True:
+            tags = await index.get_indexed_tags(self.redis)
+            out_lines = []
+            
+            total_q_len = 0
+            for tag in tags:
+                q_len = await index.get_character_queue_length(self.redis, tag)
+                total_q_len += q_len
+                
+            total_n_indexed = await self.redis.scard('indexed:danbooru')
+            await self.change_presence(activity=discord.Game("Indexing {} images".format(total_q_len)))
+            await asyncio.sleep(10)
 
     async def on_message(self, msg):
         if not self.ready:
