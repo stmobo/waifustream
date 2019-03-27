@@ -108,88 +108,16 @@ def construct_search_endpoint(page, tags):
 
     return base_url+endpoint
 
-async def api_binsearch(session, tags, find_id):
-    min_bound = 0
-    max_bound = 2
-    
-    find_id = int(find_id)
-    
-    print("[binsearch] tags: {} - finding upper bound for id {}".format(' '.join(tags), find_id))
-    
-    while True:
-        await asyncio.sleep(0.5)
-        page = max_bound
-        
-        if page > 1000:
-            page = 1000
-            break
-        
-        print("[binsearch] tags: {} - page {}".format(' '.join(tags), page))
-        
-        async with session.get(construct_search_endpoint(page, tags)) as response:
-            if response.status < 200 or response.status > 299:
-                print("    Got error response code {} when retrieving {} page {}".format(str(response.status), ' '.join(tags), page))
-                continue
-            
-            data = await response.json()
-            
-            if not isinstance(data, list):
-                print("    Got weird response: "+str(data))
-                continue
-                
-            ids = list(int(d['id']) for d in data)
-            lowest_id = min(ids)
-            
-            if lowest_id < find_id:
-                break
-            
-        min_bound = max_bound
-        max_bound *= 2
-    
-    print("[binsearch] tags: {} - binary searching for page".format(' '.join(tags)))
-    
-    while int(max_bound - min_bound) > 1:
-        await asyncio.sleep(0.5)
-        
-        test_page = min_bound + int((max_bound - min_bound) // 2)
-        
-        print("[binsearch] tags: {} - page {}".format(' '.join(tags), page))
-        async with session.get(construct_search_endpoint(test_page, tags)) as response:
-            if response.status < 200 or response.status > 299:
-                print("    Got error response code {} when retrieving {} page {}".format(str(response.status), ' '.join(tags), test_page))
-                continue
-            
-            data = await response.json()
-            
-            if not isinstance(data, list):
-                print("    Got weird response: "+str(data))
-                continue
-                
-            ids = list(int(d['id']) for d in data)
-            lowest_id = min(ids)
-            
-            if lowest_id > find_id:
-                # search upper half
-                min_bound = test_page
-            else:
-                # search lower half:
-                max_bound = test_page
-    
-    return min_bound
-            
-
 async def search_api(session, tags, start_id=None):
     if len(tags) > 2:
         raise ValueError("Cannot search for more than two tags at a time")
     
     if start_id is not None:
         start_id = int(start_id)
-        page = await api_binsearch(session, tags, start_id)
-        print("[search] tags: {} - starting from page {}".format(' '.join(tags), page))
-    else:
-        page = 0
+    
+    page = 0
         
-    while True:
+    while page < 1000:
         await asyncio.sleep(0.5)
         
         print("[search] tags: {} - page {}".format(' '.join(tags), page))
@@ -209,7 +137,9 @@ async def search_api(session, tags, start_id=None):
                 
             page += 1
             
-            last_id = int(data[-1]['id'])
+            ids = list(int(d['id']) for d in data)
+            last_id = min(ids)
+            
             if start_id is not None and last_id > start_id:
                 continue
                 
