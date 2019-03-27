@@ -42,7 +42,7 @@ async def main():
     dist2 = index.hamming_dist(ah1, ah2)
     
     print("Closest match: {} - Distance {} ({}+{})".format(res_imhash.hex(), dist, dist1, dist2))
-    print("Source: {}#{}".format(entry.src, entry.src_url))
+    print("Source: {}#{}".format(entry.src, entry.src_id))
     print("Rating: "+str(entry.rating))
     print("Characters: "+' '.join(entry.characters))
     
