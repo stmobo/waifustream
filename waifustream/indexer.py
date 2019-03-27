@@ -20,31 +20,33 @@ async def refresh_character_worker():
     print("[refresh] Tag refresh worker started.")
     
     while True:
-        tag = await redis.brpoplpush('indexed_tags', 'indexed_tags')
-        tag = tag.decode('utf-8')
-        print("[refresh] Refreshing tag: "+tag)
+        tags = await redis.lrange('indexed_tags', 0, -1)
         
-        n = 0
         async with aiohttp.ClientSession() as sess:
-            async for post in danbooru.search(sess, [tag], index.exclude_tags):
-                is_indexed, awaiting_index = await asyncio.gather(
-                    redis.sismember('indexed:danbooru', str(post.id)),
-                    redis.sismember('awaiting_index:danbooru', str(post.id))
-                )
+            for tag in tags:
+                tag = tag.decode('utf-8')
+                print("[refresh] Refreshing tag: "+tag)
                 
-                if is_indexed or awaiting_index:
-                    continue
-                
-                entry = IndexEntry.from_danbooru_post(None, post)
-                ser = json.dumps(attr.asdict(entry))
-                
-                await redis.lpush('index_queue:'+tag, ser)
-                await redis.sadd('awaiting_index:danbooru', str(post.id))
-                n += 1
-                
-        print("[refresh] Enqueued {} items for {}".format(n, tag))
+                n = 0
+                async for post in danbooru.search(sess, [tag], index.exclude_tags):
+                    is_indexed, awaiting_index = await asyncio.gather(
+                        redis.sismember('indexed:danbooru', str(post.id)),
+                        redis.sismember('awaiting_index:danbooru', str(post.id))
+                    )
+                    
+                    if is_indexed or awaiting_index:
+                        continue
+                    
+                    entry = IndexEntry.from_danbooru_post(None, post)
+                    ser = json.dumps(attr.asdict(entry))
+                    
+                    await redis.lpush('index_queue:'+tag, ser)
+                    await redis.sadd('awaiting_index:danbooru', str(post.id))
+                    n += 1
+                    
+            print("[refresh] Enqueued {} items for {}".format(n, tag))
     
-        await asyncio.sleep(15)
+        await asyncio.sleep(90)
 
 
 async def fetch_worker():
