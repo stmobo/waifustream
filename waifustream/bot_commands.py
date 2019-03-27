@@ -138,7 +138,7 @@ async def cmd_identify(client, msg, args):
             res_imhash, dist = res[0]
             entry = await IndexEntry.load_from_index(client.redis, res_imhash)
             
-            with aiohttp.ClientSession() as sess:
+            async with aiohttp.ClientSession() as sess:
                 db_post = await danbooru.DanbooruPost.get_post(sess, entry.src_id)
             
             lines = [
