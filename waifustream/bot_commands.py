@@ -62,9 +62,9 @@ async def cmd_identify(client, msg, args):
             lines = [
                 "Lookup completed in {:.3f} seconds:".format(t2-t1),
                 "    **Image Hash:** `{}`".format(entry.imhash.hex()),
-                "    **Source:** `{}#{}`".format(entry.src, entry.src_id),
+                "    **Source:**     `{}#{}`".format(entry.src, entry.src_id),
                 "    **Characters:**: {}".format(', '.join('`{}`'.format(c) for c in entry.characters)),
-                "    **Rating:**: {}".format(index.friendly_ratings.get(entry.rating, 'Unknown'))
+                "    **Rating:**:     `{}`".format(index.friendly_ratings.get(entry.rating, 'Unknown'))
             ]
             
             return await client.reply(msg, '\n'.join(lines))
