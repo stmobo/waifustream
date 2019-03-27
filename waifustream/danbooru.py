@@ -123,26 +123,34 @@ async def search_api(session, tags, start_id=None):
         start_id = int(start_id)
     
     page = 0
+    n_tries = 0
         
     while page < 1000:
         await asyncio.sleep(0.5)
+        
+        if n_tries > 5:
+            print("Giving up.")
+            return
         
         print("[search] tags: {} - page {}".format(' '.join(tags), page))
         async with session.get(construct_search_endpoint(page, tags, start_id)) as response:
             if response.status < 200 or response.status > 299:
                 print("    Got error response code {} when retrieving {} page {}".format(str(response.status), ' '.join(tags), page))
+                n_tries += 1
                 continue
             
             data = await response.json()
             
             if not isinstance(data, list):
                 print("    Got weird response: "+str(data))
+                n_tries += 1
                 continue
                 
             if len(data) == 0:
                 return
                 
             page += 1
+            n_tries = 0
             
             ids = list(int(d['id']) for d in data)
             last_id = min(ids)
