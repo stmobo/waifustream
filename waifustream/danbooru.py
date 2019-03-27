@@ -111,9 +111,10 @@ async def search_api(session, tags):
         if len(tags) > 0:
             endpoint += '&tags={}'.format('%20'.join(map(lambda s: str(s).lower().strip(), tags)))
         
+        print("[search] tags: {} - page {}".format(' '.join(tags), page))
         async with session.get(base_url+endpoint) as response:
             if response.status < 200 or response.status > 299:
-                return
+                continue
             
             data = await response.json()
             
