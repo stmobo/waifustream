@@ -73,6 +73,14 @@ class WaifuStreamClient(discord.Client):
     async def dispatch_cmd(self, msg, cmd, args):
         if cmd == 'identify':
             return await bot_commands.cmd_identify(self, msg, args)
+        elif cmd == 'status':
+            return await bot_commands.cmd_indexer_status(self, msg, args)
+        elif cmd == 'remove' or cmd == 'unindex':
+            return await bot_commands.cmd_remove_indexed_tag(self, msg, args)
+        elif cmd == 'add' or cmd == 'index':
+            return await bot_commands.cmd_add_indexed_tag(self, msg, args)
+        else:
+            return await self.reply(msg, "I couldn't recognize that command.")
     
     async def on_ready(self):
         print('Logged in as')

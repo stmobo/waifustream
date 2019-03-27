@@ -44,7 +44,7 @@ async def refresh_character_worker():
                 
         print("[refresh] Enqueued {} items for {}".format(n, tag))
     
-        await asyncio.sleep(30)
+        await asyncio.sleep(15)
 
 
 async def fetch_worker():

@@ -142,12 +142,10 @@ async def search(session, with_tags, without_tags, rating=None):
         
         yield post
 
-async def resolve_tag(tag):
+async def lookup_tag(tag):
     async with aiohttp.ClientSession() as sess:
-        url = base_url+'/tags.json?search[name_matches]='+tag+'*'
+        url = base_url+'/tags.json?search[name_matches]=*'+tag+'*'
         
         async with sess.get(url) as resp:
-            data = await resp.json()
-            if len(data) > 0:
-                return data[-1]['name']
+            return await resp.json()
         
