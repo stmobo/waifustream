@@ -111,9 +111,6 @@ async def search_api(session, tags, start_from=None):
         if len(tags) > 0:
             endpoint += '&tags={}'.format('%20'.join(map(lambda s: str(s).lower().strip(), tags)))
         
-        if start_from is not None:
-            endpoint += '&search[id]=<'+str(start_from)
-        
         print("[search] tags: {} - page {}".format(' '.join(tags), page))
         async with session.get(base_url+endpoint) as response:
             if response.status < 200 or response.status > 299:
@@ -123,6 +120,10 @@ async def search_api(session, tags, start_from=None):
             
             if len(data) == 0:
                 return
+                
+            last_id = int(data[-1]['id'])
+            if last_id > start_from:
+                continue
                 
             for d in data:
                 yield DanbooruPost.from_api_json(d)
