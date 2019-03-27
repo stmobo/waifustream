@@ -100,7 +100,7 @@ async def api_random(session, tags):
         data = await response.json()
         return list(DanbooruPost.from_api_json(d) for d in data)
 
-async def search_api(session, tags):
+async def search_api(session, tags, start_from=None):
     if len(tags) > 2:
         raise ValueError("Cannot search for more than two tags at a time")
     
@@ -110,6 +110,9 @@ async def search_api(session, tags):
         
         if len(tags) > 0:
             endpoint += '&tags={}'.format('%20'.join(map(lambda s: str(s).lower().strip(), tags)))
+        
+        if start_from is not None:
+            endpoint += '&search[id]=<'+str(start_from)
         
         print("[search] tags: {} - page {}".format(' '.join(tags), page))
         async with session.get(base_url+endpoint) as response:
@@ -127,8 +130,8 @@ async def search_api(session, tags):
         page += 1
         
         
-async def search(session, with_tags, without_tags, rating=None):
-    async for post in search_api(session, with_tags[:2]):
+async def search(session, with_tags, without_tags, rating=None, start_from=None):
+    async for post in search_api(session, with_tags[:2], start_from=start_from):
         if not all((tag in post) for tag in with_tags):
             continue
         

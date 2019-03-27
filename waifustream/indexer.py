@@ -17,8 +17,16 @@ REDIS_URL = 'redis://localhost'
 async def refresh_one_tag(tag, sess, redis):
     print("[refresh] Refreshing tag: "+tag)
     
+    cur_head = redis.lindex('index_queue:'+tag, 0)
+    if cur_head is not None:
+        head_entry = json.loads(cur_head)
+        last_id = head_entry['src_id']
+        print("[refresh] starting from ID {} with tag {}".format(last_id, tag))
+    else:
+        last_id = None
+    
     n = 0
-    async for post in danbooru.search(sess, [tag], index.exclude_tags):
+    async for post in danbooru.search(sess, [tag], index.exclude_tags, start_from=last_id):
         is_indexed, awaiting_index = await asyncio.gather(
             redis.sismember('indexed:danbooru', str(post.id)),
             redis.sismember('awaiting_index:danbooru', str(post.id))
