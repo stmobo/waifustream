@@ -100,11 +100,20 @@ async def api_random(session, tags):
         data = await response.json()
         return list(DanbooruPost.from_api_json(d) for d in data)
 
-def construct_search_endpoint(page, tags):
+def construct_search_endpoint(page, tags, start_id):
     endpoint = '/posts.json?page={}&limit=200'.format(page)
+    tags = list(tags)
+    
+    if start_id is not None:
+        if len(tags) >= 2:
+            tags = list(tags[:1])
+        
+        tags.append('id%3A%3C'+str(start_id))
     
     if len(tags) > 0:
-        endpoint += '&tags={}'.format('%20'.join(map(lambda s: str(s).lower().strip(), tags)))
+        endpoint += '&tags={}'.format('+'.join(map(lambda s: str(s).lower().strip(), tags)))
+
+    print(endpoint)
 
     return base_url+endpoint
 
@@ -121,7 +130,7 @@ async def search_api(session, tags, start_id=None):
         await asyncio.sleep(0.5)
         
         print("[search] tags: {} - page {}".format(' '.join(tags), page))
-        async with session.get(construct_search_endpoint(page, tags)) as response:
+        async with session.get(construct_search_endpoint(page, tags, start_id)) as response:
             if response.status < 200 or response.status > 299:
                 print("    Got error response code {} when retrieving {} page {}".format(str(response.status), ' '.join(tags), page))
                 continue
