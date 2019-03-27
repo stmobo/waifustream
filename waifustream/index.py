@@ -57,7 +57,7 @@ class IndexEntry(object):
     
     @property
     def imhash_array(self):
-        return np.frombuffer(imhash, dtype=np.uint8)
+        return np.frombuffer(self.imhash, dtype=np.uint8)
     
     @classmethod
     def from_danbooru_post(cls, imhash, post):
