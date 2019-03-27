@@ -17,16 +17,16 @@ REDIS_URL = 'redis://localhost'
 
 async def refresh_character_worker():
     redis = await aioredis.create_redis(REDIS_URL)
-    print("[refresh] Character refresh worker started.")
+    print("[refresh] Tag refresh worker started.")
     
     while True:
-        character = await redis.brpoplpush('indexed_tags', 'indexed_tags')
-        character = character.decode('utf-8')
-        print("[refresh] Refreshing character: "+character)
+        tag = await redis.brpoplpush('indexed_tags', 'indexed_tags')
+        tag = tag.decode('utf-8')
+        print("[refresh] Refreshing tag: "+tag)
         
         n = 0
         async with aiohttp.ClientSession() as sess:
-            async for post in danbooru.search(sess, [character], index.exclude_tags):
+            async for post in danbooru.search(sess, [tag], index.exclude_tags):
                 is_indexed, awaiting_index = await asyncio.gather(
                     redis.sismember('indexed:danbooru', str(post.id)),
                     redis.sismember('awaiting_index:danbooru', str(post.id))
@@ -38,11 +38,11 @@ async def refresh_character_worker():
                 entry = IndexEntry.from_danbooru_post(None, post)
                 ser = json.dumps(attr.asdict(entry))
                 
-                await redis.lpush('index_queue:'+character, ser)
+                await redis.lpush('index_queue:'+tag, ser)
                 await redis.sadd('awaiting_index:danbooru', str(post.id))
                 n += 1
                 
-        print("[refresh] Enqueued {} items for {}".format(n, character))
+        print("[refresh] Enqueued {} items for {}".format(n, tag))
     
         await asyncio.sleep(30)
 
@@ -52,13 +52,11 @@ async def fetch_worker():
     print("[fetch] Fetch worker started.")
     
     async with aiohttp.ClientSession() as sess:
-        last_fetch_time = time.perf_counter()
-        
         while True:
-            characters = await redis.lrange('indexed_tags', 0, -1)
-            for character in characters:
-                character = character.decode('utf-8')
-                next_entry = await redis.rpop('index_queue:'+character)
+            tags = await redis.lrange('indexed_tags', 0, -1)
+            for tag in tags:
+                tag = tag.decode('utf-8')
+                next_entry = await redis.rpop('index_queue:'+tag)
                 
                 if next_entry is None:
                     continue
@@ -83,11 +81,7 @@ async def fetch_worker():
                 except (OSError, aiohttp.ClientError):
                     traceback.print_exc()
                     await redis.sadd('indexed:'+entry.src, entry.src_id)
-                    
-                cur_time = time.perf_counter()
                 
-                dt = cur_time - last_fetch_time
-                last_fetch_time = cur_time
                 
                 await asyncio.sleep(MIN_DOWNLOAD_DELAY)
 
