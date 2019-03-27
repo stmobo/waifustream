@@ -71,8 +71,8 @@ async def cmd_indexer_status(client, msg, args):
         out_lines = []
         
         for character in characters:
-            q_len = await index.get_character_queue_length(redis, character)
-            n_indexed = await redis.scard('character:'+character)
+            q_len = await index.get_character_queue_length(client.redis, character)
+            n_indexed = await client.redis.scard('character:'+character)
             
             out = "`{}`: {} items queued".format(character, q_len)
             if n_indexed > 0:
@@ -87,8 +87,8 @@ async def cmd_indexer_status(client, msg, args):
         return await client.reply(msg, "Currently indexing tags:\n"+("\n".join(l[0] for l in out_lines)))
     else:
         character = args[0]
-        q_len = await index.get_character_queue_length(redis, character)
-        n_indexed = await redis.scard('character:'+character)
+        q_len = await index.get_character_queue_length(client.redis, character)
+        n_indexed = await client.redis.scard('character:'+character)
         
         out = "`{}`: {} items queued, {} items indexed".format(character, q_len, n_indexed)
         
