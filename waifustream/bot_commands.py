@@ -145,7 +145,7 @@ async def cmd_identify(client, msg, args):
                 "Lookup completed in {:.3f} seconds:".format(t2-t1),
                 "    **Confidence:**: {:.1%} (distance {})".format((128 - dist) / 128, dist),
                 "    **Source:** {}#{}".format(entry.src.title(), entry.src_id),
-                "    **Rating:**: {}".format(index.friendly_ratings.get(entry.rating, 'Unknown'))
+                "    **Rating:**: {}".format(index.friendly_ratings.get(entry.rating, 'Unknown')),
                 "    **Franchises:**: {}".format(', '.join('`{}`'.format(c) for c in db_post.copyrights)),
                 "    **Characters:**: {}".format(', '.join('`{}`'.format(c) for c in entry.characters)),
                 "    **Artists:**: {}".format(', '.join('`{}`'.format(c) for c in db_post.artists)),
