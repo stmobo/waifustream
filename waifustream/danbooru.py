@@ -118,6 +118,8 @@ async def api_binsearch(session, tags, find_id):
     
     while True:
         await asyncio.sleep(0.5)
+        page = max_bound
+        
         print("[binsearch] tags: {} - page {}".format(' '.join(tags), page))
         
         async with session.get(construct_search_endpoint(page, tags)) as response:
