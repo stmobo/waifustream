@@ -67,7 +67,7 @@ async def cmd_add_indexed_tag(client, msg, args):
 
 async def cmd_indexer_status(client, msg, args):
     if len(args) == 0:
-        characters = await index.get_indexed_characters(client.redis)
+        characters = await index.get_indexed_tags(client.redis)
         out_lines = []
         
         for character in characters:
