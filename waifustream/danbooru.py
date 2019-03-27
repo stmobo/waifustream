@@ -18,9 +18,6 @@ class DanbooruPost(object):
     url: str = attr.ib()
     characters: tuple = attr.ib(converter=tuple)
     
-    imhash = attr.ib(default=None)
-    indexed = attr.ib(default=False)
-    
     def __len__(self):
         return len(self.tags)
     

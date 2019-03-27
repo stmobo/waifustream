@@ -6,6 +6,7 @@ import traceback
 import aiohttp
 import aioredis
 from waifustream import danbooru, index
+from waifustream.index import IndexEntry
 
 task_sem = asyncio.Semaphore(value=10)
 n_complete = 0
@@ -17,21 +18,32 @@ async def index_one(redis, sess, post):
         return 0
     
     async with task_sem:
-        try:
-            t1 = time.perf_counter()
-            inserted, as_id = await index.index_post(redis, sess, post)
-            t2 = time.perf_counter()
-            
-            n_complete += 1
-            
-            if inserted:
-                print("Indexed post {} in {:.4f} seconds (n={})".format(post.id, t2-t1, n_complete))
-                return 1
-            else:
-                print("Post {} already in index as post {} ({:.4f} seconds for query, n={})".format(post.id, as_id, t2-t1, n_complete))
-                return 0
-        except Exception as e:
-            traceback.print_exc()
+        t1 = time.perf_counter()
+        
+        img = await post.fetch(sess)
+        t2 = time.perf_counter()
+        
+        imhash = danbooru.combined_hash(img)
+        t3 = time.perf_counter()
+        
+        img.close()
+        entry = IndexEntry.from_danbooru_post(imhash, post)
+        inserted, as_id = await entry.add_to_index(redis)
+        t4 = time.perf_counter()
+        
+        total_time = t4 - t1
+        fetch_time = t2 - t1
+        hash_time = t3 - t2
+        index_time = t4 - t3
+        
+        n_complete += 1
+        
+        if inserted:
+            print("Indexed post {} (#{}) - times: {:.4f} / {:.4f} / {:.4f} (total {:.4f} seconds)".format(post.id, n_complete, fetch_time, hash_time, index_time, total_time))
+            return 1
+        else:
+            print("Post {} already in index as post {} (#{}) - times: {:.4f} / {:.4f} / {:.4f} (total {:.4f} seconds)".format(post.id, as_id, n_complete, fetch_time, hash_time, index_time, total_time))
+            return 0
     
     return 0
 

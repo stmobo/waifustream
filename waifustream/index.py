@@ -1,3 +1,4 @@
+import asyncio
 import sys
 
 import aiohttp
@@ -18,36 +19,85 @@ exclude_tags = [
 def construct_hash_idx_key(idx, val):
     return 'hash_idx:{:02d}:{:02x}'.format(idx, val).encode('utf-8')
 
-async def index_post(redis, http_sess, post):
-    if post.url is None:
-        raise ValueError("Post has no file URL!")
-        
-    img = await post.fetch(http_sess)
-    h = danbooru.combined_hash(img)
-    h_bytes = h.tobytes()
-    img.close()
-        
-    ex = await redis.get(b'hash:'+h_bytes+b':id')
-    if ex is not None:
-        return False, ex
-        
-    tr = redis.multi_exec()
-    tr.set(b'hash:'+h_bytes+b':id', post.id)
-    tr.set(b'hash:'+h_bytes+b':src', 'danbooru')
+@attr.s(frozen=True)
+class IndexEntry(object):
+    def _cvt_imhash(h):
+        if isinstance(h, np.ndarray):
+            return h.tobytes()
+        else:
+            return bytes(h)
     
-    for idx, val in enumerate(h_bytes):
-        tr.sadd(construct_hash_idx_key(idx, val), h_bytes)
-        
-    if len(post.characters) > 0:
-        tr.sadd(b'hash:'+h_bytes+b':characters', *post.characters)
-        for character in post.characters:
-            b_char = character.encode('utf-8')
-            tr.sadd(b'character:'+b_char, h_bytes)
-        
-    res = await tr.execute()
-    return True, post.id
+    imhash: bytes = attr.ib(converter=_cvt_imhash)
+    src: str = attr.ib(converter=str)
+    src_id: str = attr.ib(converter=str)
+    src_url: str = attr.ib(converter=str)
+    characters: tuple = attr.ib(converter=tuple)
+    rating: str = attr.ib(converter=str)
     
-async def search_index(redis, imhash):
+    @property
+    def imhash_array(self):
+        return np.frombuffer(imhash, dtype=np.uint8)
+    
+    @classmethod
+    def from_danbooru_post(cls, imhash, post):
+        return cls(
+            imhash=imhash,
+            src_id=post.id,
+            src_url=post.url,
+            src='danbooru',
+            characters=post.characters,
+            rating=post.rating
+        )
+    
+    @classmethod
+    async def load_from_index(cls, redis, imhash):
+        imhash = cls._cvt_imhash(imhash)
+        
+        ex = await redis.exists(b'hash:'+imhash+b':src')
+        if not ex:
+            raise KeyError("Image with hash "+imhash.hex()+" not found in index")
+        
+        src, src_id, src_url, rating, characters = await asyncio.gather(
+            redis.get(b'hash:'+imhash+b':src'),
+            redis.get(b'hash:'+imhash+b':src_id'),
+            redis.get(b'hash:'+imhash+b':src_url'),
+            redis.get(b'hash:'+imhash+b':rating'),
+            redis.smembers(b'hash:'+imhash+b':characters')
+        )
+        
+        return cls(
+            imhash=imhash,
+            src=src.decode('utf-8'),
+            src_id=src_id.decode('utf-8'),
+            src_url=src_url.decode('utf-8'),
+            characters=map(lambda c: c.decode('utf-8'), characters),
+            rating=rating.decode('utf-8')
+        )
+    
+    async def add_to_index(self, redis):
+        ex = await redis.get(b'hash:'+self.imhash+b':src_id')
+        if ex is not None:
+            return False, ex
+        
+        tr = redis.multi_exec()
+        tr.set(b'hash:'+self.imhash+b':src', self.src)
+        tr.set(b'hash:'+self.imhash+b':src_id', self.src_id)
+        tr.set(b'hash:'+self.imhash+b':src_url', self.src_url)
+        tr.set(b'hash:'+self.imhash+b':rating', self.rating)
+        
+        for idx, val in enumerate(self.imhash):
+            tr.sadd(construct_hash_idx_key(idx, val), self.imhash)
+            
+        if len(self.characters) > 0:
+            tr.sadd(b'hash:'+self.imhash+b':characters', *self.characters)
+            for character in self.characters:
+                b_char = character.encode('utf-8')
+                tr.sadd(b'character:'+b_char, self.imhash)
+            
+        res = await tr.execute()
+        return True, self.src_id
+
+async def search_index(redis, imhash, min_threshold=64):
     h_bytes = imhash.tobytes()
     
     keys = []
@@ -60,14 +110,8 @@ async def search_index(redis, imhash):
     for h in hashes:
         arr = np.frombuffer(h, dtype=np.uint8)
         dist = danbooru.hamming_dist(arr, imhash)
-        _t.append((h, dist))
+        
+        if dist < min_threshold:
+            _t.append((h, dist))
         
     return sorted(_t, key=lambda o: o[1])
-
-async def get_by_imhash(redis, h_bytes):
-    post_id = await redis.get(b'hash:'+h_bytes+b':id')
-    
-    if post_id is not None:
-        post_id = post_id.decode('utf-8')
-        async with aiohttp.ClientSession() as sess:
-            return await danbooru.DanbooruPost.get_post(sess, post_id)

@@ -8,6 +8,7 @@ import aioredis
 import numpy as np
 
 from waifustream import danbooru, index
+from waifustream.index import IndexEntry
 
 
 async def main():
@@ -29,7 +30,7 @@ async def main():
     print("Lookup completed in {:.4f} seconds".format(t2-t1))
     print("Results: ")
     for h, dist in res:
-        post = await index.get_by_imhash(redis, h)
+        entry = await IndexEntry.load_from_index(redis, h)
         
         arr = np.frombuffer(h, dtype=np.uint8)
         dh2 = arr[:8]
@@ -38,7 +39,7 @@ async def main():
         dist1 = danbooru.hamming_dist(dh1, dh2)
         dist2 = danbooru.hamming_dist(ah1, ah2)
         
-        print("{} (ID {}) - distance {} ({}+{})".format(h.hex(), post.id, dist, dist1, dist2))
+        print("{} (ID {}) - distance {} ({}+{})".format(h.hex(), entry.src_id, dist, dist1, dist2))
     
 
 if __name__ == '__main__':
