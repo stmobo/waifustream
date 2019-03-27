@@ -124,7 +124,7 @@ async def search_api(session, tags, start_from=None):
                 return
                 
             last_id = int(data[-1]['id'])
-            if start_from is not None and last_id > start_from:
+            if int(start_from) is not None and last_id > int(start_from):
                 continue
                 
             for d in data:
