@@ -124,7 +124,7 @@ async def api_binsearch(session, tags, find_id):
         
         async with session.get(construct_search_endpoint(page, tags)) as response:
             if response.status < 200 or response.status > 299:
-                print("    Got error response code when retrieving {} page {}"+str(response.status, ' '.join(tags), page-1))
+                print("    Got error response code {} when retrieving {} page {}".format(str(response.status), ' '.join(tags), page))
                 continue
             
             data = await response.json()
@@ -152,7 +152,7 @@ async def api_binsearch(session, tags, find_id):
         print("[binsearch] tags: {} - page {}".format(' '.join(tags), page))
         async with session.get(construct_search_endpoint(test_page, tags)) as response:
             if response.status < 200 or response.status > 299:
-                print("    Got error response code when retrieving {} page {}"+str(response.status, ' '.join(tags), page-1))
+                print("    Got error response code {} when retrieving {} page {}".format(str(response.status), ' '.join(tags), test_page))
                 continue
             
             data = await response.json()
@@ -191,7 +191,7 @@ async def search_api(session, tags, start_id=None):
         print("[search] tags: {} - page {}".format(' '.join(tags), page))
         async with session.get(construct_search_endpoint(page, tags)) as response:
             if response.status < 200 or response.status > 299:
-                print("    Got error response code {} when retrieving {} page {}"+str(response.status, ' '.join(tags), page-1))
+                print("    Got error response code {} when retrieving {} page {}".format(str(response.status), ' '.join(tags), page))
                 continue
             
             data = await response.json()
