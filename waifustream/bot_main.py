@@ -12,6 +12,7 @@ import discord
 import ujson as json
 
 from . import utils
+from . import index
 from . import bot_commands
 
 class WaifuStreamClient(discord.Client):
