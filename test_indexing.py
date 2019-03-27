@@ -28,7 +28,7 @@ async def index_one(redis, sess, post):
         
         img.close()
         entry = IndexEntry.from_danbooru_post(imhash, post)
-        inserted, as_id = await entry.add_to_index(redis)
+        inserted = await entry.add_to_index(redis)
         t4 = time.perf_counter()
         
         total_time = t4 - t1
@@ -42,7 +42,7 @@ async def index_one(redis, sess, post):
             print("Indexed post {} (#{}) - times: {:.4f} / {:.4f} / {:.4f} (total {:.4f} seconds)".format(post.id, n_complete, fetch_time, hash_time, index_time, total_time))
             return 1
         else:
-            print("Post {} already in index as post {} (#{}) - times: {:.4f} / {:.4f} / {:.4f} (total {:.4f} seconds)".format(post.id, as_id, n_complete, fetch_time, hash_time, index_time, total_time))
+            print("Post {} already in index (#{}) - times: {:.4f} / {:.4f} / {:.4f} (total {:.4f} seconds)".format(post.id, n_complete, fetch_time, hash_time, index_time, total_time))
             return 0
     
     return 0

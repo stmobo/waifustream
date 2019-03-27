@@ -12,7 +12,7 @@ async def main():
     
     characters = await index.get_indexed_characters(redis)
     for character in characters:
-        q_len = await index.get_character_queue_length(redis, character)
+        q_len = await index.get_tag_queue_length(redis, character)
         n_indexed = await redis.scard('character:'+character)
         
         print("{}: {} items queued, {} items indexed".format(character, q_len, n_indexed))

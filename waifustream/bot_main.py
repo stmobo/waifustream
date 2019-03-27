@@ -118,7 +118,7 @@ class WaifuStreamClient(discord.Client):
                 
                 total_q_len = 0
                 for tag in tags:
-                    q_len = await index.get_character_queue_length(self.redis, tag)
+                    q_len = await index.get_tag_queue_length(self.redis, tag)
                     total_q_len += q_len
                     
                 total_n_indexed = await self.redis.scard('indexed:danbooru')
