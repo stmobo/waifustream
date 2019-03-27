@@ -5,7 +5,6 @@ import io
 import aiohttp
 import attr
 from PIL import Image
-import imagehash
 import numpy as np
 
 base_url = 'https://danbooru.donmai.us'
@@ -142,27 +141,13 @@ async def search(session, with_tags, without_tags, rating=None):
             continue
         
         yield post
+
+async def resolve_tag(tag):
+    async with aiohttp.ClientSession() as sess:
+        url = base_url+'/tags.json?search[name_matches]='+tag+'*'
         
-def diff_hash(img):
-    h = imagehash.dhash(img)
-    arr = np.packbits(np.where(h.hash.flatten(), 1, 0))
-    
-    return arr
-
-def avg_hash(img):
-    h = imagehash.average_hash(img)
-    arr = np.packbits(np.where(h.hash.flatten(), 1, 0))
-    
-    return arr
-
-def combined_hash(img):
-    h1 = imagehash.dhash(img)
-    h1 = np.packbits(np.where(h1.hash.flatten(), 1, 0))
-    
-    h2 = imagehash.average_hash(img)
-    h2 = np.packbits(np.where(h2.hash.flatten(), 1, 0))
-    
-    return np.concatenate((h1, h2))
-
-def hamming_dist(h1, h2):
-    return np.count_nonzero(np.unpackbits(np.bitwise_xor(h1, h2)))
+        async with sess.get(url) as resp:
+            data = await resp.json()
+            if len(data) > 0:
+                return data[-1]['name']
+        

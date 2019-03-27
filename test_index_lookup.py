@@ -13,7 +13,7 @@ from waifustream.index import IndexEntry
 
 async def main():
     with Image.open(sys.argv[1]) as img:
-        imhash = danbooru.combined_hash(img)
+        imhash = index.combined_hash(img)
         h_bytes = imhash.tobytes()
         
     print("Lookup: "+h_bytes.hex())
@@ -36,8 +36,8 @@ async def main():
         dh2 = arr[:8]
         ah2 = arr[8:]
         
-        dist1 = danbooru.hamming_dist(dh1, dh2)
-        dist2 = danbooru.hamming_dist(ah1, ah2)
+        dist1 = index.hamming_dist(dh1, dh2)
+        dist2 = index.hamming_dist(ah1, ah2)
         
         print("{} (ID {}) - distance {} ({}+{})".format(h.hex(), entry.src_id, dist, dist1, dist2))
     

@@ -23,7 +23,7 @@ async def index_one(redis, sess, post):
         img = await post.fetch(sess)
         t2 = time.perf_counter()
         
-        imhash = danbooru.combined_hash(img)
+        imhash = index.combined_hash(img)
         t3 = time.perf_counter()
         
         img.close()

@@ -1,4 +1,4 @@
-from waifustream import indexing
+from waifustream import indexer
 
 if __name__ == '__main__':
-    indexing.main()
+    indexer.main()
