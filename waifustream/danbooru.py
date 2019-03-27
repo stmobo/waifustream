@@ -100,12 +100,14 @@ async def api_random(session, tags):
         data = await response.json()
         return list(DanbooruPost.from_api_json(d) for d in data)
 
-async def search_api(session, tags, start_from=None):
+async def search_api(session, tags, redis, start_id=None):
     if len(tags) > 2:
         raise ValueError("Cannot search for more than two tags at a time")
     
     page = 0
     while True:
+        await asyncio.sleep(0.5)
+        
         endpoint = '/posts.json?page={}&limit=200'.format(page)
         
         if len(tags) > 0:
@@ -113,28 +115,30 @@ async def search_api(session, tags, start_from=None):
         
         print("[search] tags: {} - page {}".format(' '.join(tags), page))
         async with session.get(base_url+endpoint) as response:
-            page += 1
-            
             if response.status < 200 or response.status > 299:
+                print("    Got error response code when retrieving {} page {}"+str(response.status, ' '.join(tags), page-1))
                 continue
             
             data = await response.json()
             
+            if not isinstance(data, list):
+                continue
+                
             if len(data) == 0:
                 return
                 
+            page += 1
+            
             last_id = int(data[-1]['id'])
-            if start_from is not None and int(start_from) is not None and last_id > int(start_from):
+            if start_id is not None and int(start_id) is not None and last_id > int(start_id):
                 continue
                 
             for d in data:
                 yield DanbooruPost.from_api_json(d)
                 
         
-        
-        
-async def search(session, with_tags, without_tags, rating=None, start_from=None):
-    async for post in search_api(session, with_tags[:2], start_from=start_from):
+async def search(session, with_tags, without_tags, rating=None, start_id=None):
+    async for post in search_api(session, with_tags[:2], start_id=start_id):
         if not all((tag in post) for tag in with_tags):
             continue
         
