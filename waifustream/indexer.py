@@ -11,7 +11,7 @@ import aioredis
 from waifustream import danbooru, index
 from waifustream.index import IndexEntry
 
-MIN_DOWNLOAD_DELAY = 1
+MIN_DOWNLOAD_DELAY = 1.25
 REDIS_URL = 'redis://localhost'
 
 
@@ -63,6 +63,8 @@ async def fetch_worker():
                 if next_entry is None:
                     continue
                 
+                t1 = time.perf_counter()
+                
                 entry_dict = json.loads(next_entry)
                 entry = IndexEntry(**entry_dict)
                 
@@ -84,8 +86,11 @@ async def fetch_worker():
                     traceback.print_exc()
                     await redis.sadd('indexed:'+entry.src, entry.src_id)
                 
+                t2 = time.perf_counter()
                 
-                await asyncio.sleep(MIN_DOWNLOAD_DELAY)
+                dt = t2 - t1
+                if dt < MIN_DOWNLOAD_DELAY:
+                    await asyncio.sleep(MIN_DOWNLOAD_DELAY - dt)
 
 def _start_worker(f):
     loop = asyncio.get_event_loop()
