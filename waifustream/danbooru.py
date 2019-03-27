@@ -104,7 +104,6 @@ async def search_api(session, tags):
     if len(tags) > 2:
         raise ValueError("Cannot search for more than two tags at a time")
     
-    seen_ids = set()
     page = 0
     while True:
         endpoint = '/posts.json?page={}&limit=200'.format(page)
@@ -122,9 +121,7 @@ async def search_api(session, tags):
                 return
                 
             for d in data:
-                if d['id'] not in seen_ids:
-                    seen_ids.add(d['id'])
-                    yield DanbooruPost.from_api_json(d)
+                yield DanbooruPost.from_api_json(d)
                 
         page += 1
         
