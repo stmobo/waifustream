@@ -4,12 +4,12 @@ import time
 
 import traceback
 import aioredis
-from waifustream import index
+from waifustream import index, danbooru
 
 
 async def main():
     redis = await aioredis.create_redis('redis://localhost')
-    tag = await index.resolve_tag(sys.argv[1])
+    tag = await danbooru.resolve_tag(sys.argv[1])
     
     if tag is None:
         print("No known tags for tag: "+sys.argv[1])
