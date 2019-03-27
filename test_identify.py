@@ -33,6 +33,12 @@ async def main():
         return
         
     res_imhash, dist = res[0]
+    dh2 = res_imhash[:8]
+    ah2 = res_imhash[8:]
+    
+    dist1 = index.hamming_dist(dh1, dh2)
+    dist2 = index.hamming_dist(ah1, ah2)
+    
     entry = await IndexEntry.load_from_index(redis, res_imhash)
     print("Closest match: {} - Distance {} ({}+{})".format(res_imhash.hex(), dist, dist1, dist2))
     print("Source: {}#{}".format(entry.src, entry.src_url))
