@@ -80,6 +80,8 @@ class WaifuStreamClient(discord.Client):
             return await bot_commands.cmd_remove_indexed_tag(self, msg, args)
         elif cmd == 'add' or cmd == 'index':
             return await bot_commands.cmd_add_indexed_tag(self, msg, args)
+        elif cmd == 'random':
+            return await bot_commands.cmd_random(self, msg, args)
         else:
             return await self.reply(msg, "I couldn't recognize that command.")
     
