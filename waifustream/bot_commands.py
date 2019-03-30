@@ -119,7 +119,9 @@ async def cmd_random(client, msg, args):
             original.close()
             
             bio.seek(0)
-            f = discord.File(bio)
+            
+            fname = '_'.join([entry.src, str(entry.src_id)] + entry.characters)
+            f = discord.File(bio, filename=fname+'.png')
     
             await client.reply(msg, "**Source:** {}#{} | **Rating:** {} | **Characters:** {}".format(
                 entry.src.title(), entry.src_id,
