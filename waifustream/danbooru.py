@@ -104,7 +104,7 @@ async def api_random(session, tags):
         data = await response.json()
         return list(DanbooruPost.from_api_json(d) for d in data)
 
-def construct_search_endpoint(page, tags, start_id):
+def construct_search_endpoint(page, tags, start_id, random):
     endpoint = '/posts.json?page={}&limit=200'.format(page)
     tags = list(tags)
     
@@ -117,9 +117,12 @@ def construct_search_endpoint(page, tags, start_id):
     if len(tags) > 0:
         endpoint += '&tags={}'.format('+'.join(map(lambda s: str(s).lower().strip(), tags)))
 
+    if random:
+        endpoint += '&random=true'
+
     return base_url+endpoint
 
-async def search_api(session, tags, start_id=None):
+async def search_api(session, tags, start_id=None, random=False):
     if len(tags) > 2:
         raise ValueError("Cannot search for more than two tags at a time")
     
@@ -137,7 +140,7 @@ async def search_api(session, tags, start_id=None):
             return
         
         print("[search] tags: {} - page {}".format(' '.join(tags), page))
-        async with session.get(construct_search_endpoint(page, tags, start_id)) as response:
+        async with session.get(construct_search_endpoint(page, tags, start_id, random)) as response:
             if response.status < 200 or response.status > 299:
                 print("    Got error response code {} when retrieving {} page {}".format(str(response.status), ' '.join(tags), page))
                 n_tries += 1
@@ -166,8 +169,8 @@ async def search_api(session, tags, start_id=None):
                 yield DanbooruPost.from_api_json(d)
                 
         
-async def search(session, with_tags, without_tags, rating=None, start_id=None):
-    async for post in search_api(session, with_tags[:2], start_id=start_id):
+async def search(session, with_tags, without_tags, rating=None, **kwargs):
+    async for post in search_api(session, with_tags[:2], **kwargs):
         if not all((tag in post) for tag in with_tags):
             continue
         

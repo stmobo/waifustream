@@ -94,6 +94,36 @@ async def cmd_indexer_status(client, msg, args):
         
         return await client.reply(msg, out)
 
+async def cmd_random(client, msg, args):
+    if len(args) < 1:
+        return await client.reply(msg, "Usage: `w!random [character tag]`")
+    
+    for _ in range(10):
+        selected = await client.redis.srandmember('character:'+args[0])
+        if selected is None:
+            return await client.reply(msg, "Could not find any images for `{}`".format(args[0]))
+        
+        rating = await client.redis.get(b'hash:'+selected+b':rating')
+        if rating != b'e':
+            break
+    else:
+        return await client.reply(msg, "Could not find a random non-explicit image for `{}`".format(args[0]))
+
+    entry = await IndexEntry.load_from_index(client.redis, selected)
+    
+    async with aiohttp.ClientSession() as sess:
+        bio = await entry.fetch_bytesio(sess)
+        
+    f = discord.File(bio)
+    
+    await client.reply(msg, "**Source:** {}#{} | **Rating:** {} | **Characters:** {}".format(
+        entry.src.title(), entry.src_id,
+        index.friendly_ratings.get(entry.rating, 'Unknown'),
+        ', '.join('`{}`'.format(c) for c in entry.characters)
+    ), file=f)
+    
+    bio.close()
+
 async def cmd_identify(client, msg, args):
     identify_idx = 0
     
